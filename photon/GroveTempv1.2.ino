@@ -10,18 +10,45 @@ const int pinTempSensor = A0;     // Grove - Temperature Sensor connect to A5
 
 double temp = 0.0;
 
+/* How it works:
+    The TMP36 outputs a voltage proportional ot the current temperature.
+    The resolution is 10 mv / degree centigrade (100 degrees centigrade / volt). There is a 500 mV offset (.5v) so negative temperatures can be measured
+*/
+
+// What pin on the Particle device is connected to the TMP36 VOUT pin (A4)
+int sensorPin = A4;
+
+// Need a global variable to hold the temperature
+double tmp36temp = 0.0;
+
+int use_tmp36 = 1;
+
 double convertCtoF(double c)
 {
 	return c * 9.0 / 5.0 + 32;
 }
 
+void read_tmp36() {
+    // https://gist.github.com/harrisonhjones/f83adc50c81fa7622bb2
+    // Grab the raw analog value
+    int rawVal = analogRead(sensorPin);
+
+    // Convert the raw analog value to voltage
+    float voltage = rawVal * 3.3; // First multiply by the input voltage
+    voltage /= 4095.0;             // Then divide by the resolution of analogRead()
+
+    // Convert the voltage to temperature
+    double tmp36temp_c = (voltage - 0.5) * 100 ;  // (V - Offset) * 100 °C / V = °C
+    tmp36temp = convertCtoF(tmp36temp_c);
+}
 
 void setup() {
     Serial.begin(9600);
     Particle.variable("temp", temp);
     Particle.variable("file", "GroveTempV1.2.ino");
-
-
+    if(use_tmp36 == 1) {
+        Particle.variable("tmp36temp", tmp36temp);
+    }
 }
 
 void loop() {
@@ -37,6 +64,10 @@ void loop() {
     temp = convertCtoF(temp);
     Serial.print("temperature = ");
     Serial.println(temp);
+
+    if(use_tmp36==1) {
+        read_tmp36();
+    }
 
     delay(2000);
 
