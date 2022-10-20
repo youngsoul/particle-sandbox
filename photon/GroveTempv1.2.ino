@@ -31,6 +31,13 @@ double convertCtoF(double c)
 void read_tmp36() {
     // https://gist.github.com/harrisonhjones/f83adc50c81fa7622bb2
     // Grab the raw analog value
+    // https://forums.adafruit.com/viewtopic.php?f=25&t=11597
+    // some micro contollers have a single ADC for all of the inputs and when you
+    // read from difference analog inputs, it takes a moment to do the multiplex
+    // switch.
+    // There, read the sensor value once, to initiate the switch, wait, then actually read it.
+    analogRead(sensorPin);
+    delay(20);
     int rawVal = analogRead(sensorPin);
 
     // Convert the raw analog value to voltage
@@ -52,6 +59,8 @@ void setup() {
 }
 
 void loop() {
+    analogRead(pinTempSensor);
+    delay(20);
     int a = analogRead(pinTempSensor );
     Serial.println(a);
 
