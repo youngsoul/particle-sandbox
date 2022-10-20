@@ -6,6 +6,10 @@
 
 // This #include statement was automatically added by the Particle IDE.
 // get values from private file
+#define BLYNK_TEMPLATE_ID "TMPLIRdM85MP"
+#define BLYNK_DEVICE_NAME "Argon"
+#define BLYNK_AUTH_TOKEN "dh3Yp2sbgqO0QY-wWlGIpeJnlm0WUtBo"
+
 #include <blynk.h>
 
 // This function creates the timer object. It's part of Blynk library
@@ -86,7 +90,10 @@ void loop() {
         // 10 seconds has passed
         last_timestamp = timeNow;
 
-        temp = dht.getTempFarenheit();
+        double new_temp = dht.getTempFarenheit();
+        if(!isnan(new_temp)) {
+            temp = new_temp;
+        }
         humidity = dht.getHumidity();
 
         if(use_photoresistor == 1) {
