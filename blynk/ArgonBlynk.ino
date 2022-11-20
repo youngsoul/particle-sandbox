@@ -39,6 +39,7 @@ void updateBlynk()
     // e.g. writing sensor value to datastream V5
     int blynk_temp = (int)temp*10;
     Blynk.virtualWrite(V4, blynk_temp/10.0);
+    Blynk.virtualWrite(V5, humidity);
 }
 
 void setup() {
@@ -66,6 +67,7 @@ void setup() {
 }
 
 unsigned long last_timestamp = 0;
+unsigned long last_publish_timestamp = 0;
 
 int what_to_display_flag = 0; // 0-temp, 1-wifi
 int max_display_values = 2;
@@ -78,12 +80,25 @@ void loop() {
     Blynk.run();
     timer.run();
 
+    if( timeNow < last_publish_timestamp) {
+        last_publish_timestamp = 0;
+    }
+
     if( timeNow < last_timestamp ) {
         // then the millis() have rolled over, reset
         // the last_timestamp
         // https://docs.particle.io/reference/device-os/api/time/time/
         // the number returned will overflow (go back to zero ) after about 49 days.
         last_timestamp = 0;
+    }
+
+    if( (timeNow - last_publish_timestamp) > 300000 ) { // every 5 minutes
+        Particle.publish("humidity", String(humidity));
+        Particle.publish("light", String(photoresistor));
+        Particle.publish("temp", String(temp));
+        Particle.publish("wifi", String(wifi_strength));
+
+        last_publish_timestamp = timeNow;
     }
 
     if( (timeNow - last_timestamp) > 10000 ) {
