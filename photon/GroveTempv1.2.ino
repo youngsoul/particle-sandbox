@@ -21,7 +21,7 @@ int sensorPin = A4;
 // Need a global variable to hold the temperature
 double tmp36temp = 0.0;
 
-int use_tmp36 = 1;
+int use_tmp36 = 0;
 
 double convertCtoF(double c)
 {
@@ -58,27 +58,43 @@ void setup() {
     }
 }
 
+unsigned long last_timestamp = 0;
+
 void loop() {
-    analogRead(pinTempSensor);
-    delay(20);
-    int a = analogRead(pinTempSensor );
-    Serial.println(a);
+	unsigned long timeNow = millis();
+	if( timeNow < last_timestamp ) {
+			// then the millis() have rolled over, reset
+			// the last_timestamp
+			// https://docs.particle.io/reference/device-os/api/time/time/
+			// the number returned will overflow (go back to zero ) after about 49 days.
+			last_timestamp = 0;
+	}
+    if( (timeNow - last_timestamp) > 300000 ) { // every 5 minutes
 
-    double R = 4095.0/((double)a)-1.0;
-    Serial.println(R);
-    R = 100000.0*R;
-    Serial.println(R);
+        last_timestamp = timeNow;
 
-    temp=1.0/(log(R/100000.0)/B+1/298.15)-273.15;//convert to temperature via datasheet ;
-    temp = convertCtoF(temp);
-    Serial.print("temperature = ");
-    Serial.println(temp);
+        analogRead(pinTempSensor);
+        delay(20);
+        int a = analogRead(pinTempSensor );
+        Serial.println(a);
 
-    if(use_tmp36==1) {
-        read_tmp36();
+        double R = 4095.0/((double)a)-1.0;
+        Serial.println(R);
+        R = 100000.0*R;
+        Serial.println(R);
+
+        temp=1.0/(log(R/100000.0)/B+1/298.15)-273.15;//convert to temperature via datasheet ;
+        temp = convertCtoF(temp);
+        Serial.print("temperature = ");
+        Serial.println(temp);
+		if( Particle.connected()) {
+			Particle.publish("temp", String(temp));
+		}
+
+        if(use_tmp36==1) {
+            read_tmp36();
+        }
+
     }
-
-    delay(2000);
-
 
 }
