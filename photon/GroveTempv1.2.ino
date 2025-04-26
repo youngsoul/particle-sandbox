@@ -8,6 +8,18 @@ const int B=4275;                 // B value of the thermistor
 const int R0 = 100000;            // R0 = 100k
 const int pinTempSensor = A0;     // Grove - Temperature Sensor connect to A5
 
+// LED Digital Pins
+const int redLedPin = D2;
+const int greenLedPin = D4;
+
+int red_led_pattern[4] = {LOW,HIGH,HIGH,LOW};
+int green_led_pattern[4] = {HIGH,LOW,HIGH,LOW};
+const int MAX_LED_PATTERN_LENGTH = 4;
+int current_led_pattern_index = 0;
+
+// Relay Pins
+const int relayPin = D6;
+
 double temp = 0.0;
 
 /* How it works:
@@ -56,9 +68,22 @@ void setup() {
     if(use_tmp36 == 1) {
         Particle.variable("tmp36temp", tmp36temp);
     }
+
+    // setup digital outputs
+    pinMode(redLedPin, OUTPUT);
+    pinMode(greenLedPin, OUTPUT);
+
+
+    // Example usage: Turn off both pins initially
+    digitalWrite(redLedPin, LOW);
+    digitalWrite(greenLedPin, LOW);
+
+
 }
 
 unsigned long last_timestamp = 0;
+unsigned long last_10_sec_timestamp = 0;
+
 
 void loop() {
 	unsigned long timeNow = millis();
@@ -69,6 +94,16 @@ void loop() {
 			// the number returned will overflow (go back to zero ) after about 49 days.
 			last_timestamp = 0;
 	}
+
+	if( timeNow < last_10_sec_timestamp ) {
+			// then the millis() have rolled over, reset
+			// the last_timestamp
+			// https://docs.particle.io/reference/device-os/api/time/time/
+			// the number returned will overflow (go back to zero ) after about 49 days.
+			last_10_sec_timestamp = 0;
+	}
+
+
     if( (timeNow - last_timestamp) > 300000 ) { // every 5 minutes
 
         last_timestamp = timeNow;
@@ -96,5 +131,21 @@ void loop() {
         }
 
     }
+    if( (timeNow - last_10_sec_timestamp) > 10000 ) { // every 10 seconds
+        last_10_sec_timestamp = timeNow;
+
+        if( current_led_pattern_index+1 >= MAX_LED_PATTERN_LENGTH ) {
+            current_led_pattern_index = 0;
+        } else {
+            current_led_pattern_index += 1;
+        }
+
+        if( current_led_pattern_index < MAX_LED_PATTERN_LENGTH) {
+            digitalWrite(redLedPin, red_led_pattern[current_led_pattern_index]);
+            digitalWrite(greenLedPin, green_led_pattern[current_led_pattern_index]);
+        }
+
+    }
+
 
 }
